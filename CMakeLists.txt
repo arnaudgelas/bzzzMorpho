@@ -13,3 +13,9 @@ INCLUDE_DIRECTORIES( BEFORE
 
 ADD_EXECUTABLE( PointCloudReader PointCloudReader.cxx )
 TARGET_LINK_LIBRARIES( PointCloudReader vtkPoissonReconstruction )
+
+FIND_PACKAGE( ITK REQUIRED )
+INCLUDE( ${ITK_USE_FILE} )
+
+ADD_EXECUTABLE( SignedDistance SignedDistance.cxx )
+TARGET_LINK_LIBRARIES( SignedDistance ITKIO ITKCommon )
