@@ -2,5 +2,14 @@ PROJECT( BZZZMORPHO )
 
 CMAKE_MINIMUM_REQUIRED( VERSION 2.6 )
 
+FIND_PACKAGE( VTK REQUIRED )
+INCLUDE( ${VTK_USE_FILE} )
+
 ADD_SUBDIRECTORY( PoissonReconstruction )
 
+INCLUDE_DIRECTORIES( BEFORE
+  PoissonReconstruction
+)
+
+ADD_EXECUTABLE( PointCloudReader PointCloudReader.cxx )
+TARGET_LINK_LIBRARIES( PointCloudReader vtkPoissonReconstruction )
