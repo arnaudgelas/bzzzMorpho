@@ -19,3 +19,6 @@ INCLUDE( ${ITK_USE_FILE} )
 
 ADD_EXECUTABLE( SignedDistance SignedDistance.cxx )
 TARGET_LINK_LIBRARIES( SignedDistance ITKIO ITKCommon )
+
+ADD_EXECUTABLE( PCAShapeModelEstimator PCAShapeModelEstimator.cxx )
+TARGET_LINK_LIBRARIES( PCAShapeModelEstimator ITKIO ITKCommon )
