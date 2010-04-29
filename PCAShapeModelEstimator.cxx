@@ -103,6 +103,13 @@ const char* getFileExtension(const std::string& file)
 
 int main( int argc, char** argv )
 {
+  if( argc != 2 )
+    {
+    std::cerr << "PCAShapeModelEstimator(.exe) takes argument" <<std::endl;
+    std::cerr << "1-Input Folder" <<std::endl;
+    return EXIT_FAILURE;
+    }
+
   const unsigned int Dimension = 3;
   typedef float PixelType;
   typedef itk::Image< PixelType, Dimension > ImageType;
@@ -121,8 +128,11 @@ int main( int argc, char** argv )
     {
     if(strcmp(getFileExtension(files[i]),".mhd") == 0)
       {
+      std::string filename = argv[1];
+      filename += files[i];
+      
       ReaderType::Pointer reader = ReaderType::New();
-      reader->SetFileName( files[i] );
+      reader->SetFileName( filename.c_str() );
       reader->Update();
 
       listofimages.push_back( reader->GetOutput() );
@@ -151,6 +161,9 @@ int main( int argc, char** argv )
 
   applyPCAShapeEstimator->Update();
 
+  ImagePCAShapeModelEstimatorType::VectorOfDoubleType 
+    eigen = applyPCAShapeEstimator->GetEigenValues();
+
   for( unsigned int k = 0; k < NumberOfEigenValues + 1; k++ )
     {
     WriterType::Pointer writer = WriterType::New();
@@ -161,8 +174,12 @@ int main( int argc, char** argv )
       }
     else
       {
-      std::string filename = "eigenvalue" + ( k - 1 );
-      filename += ".mhd";
+      std::stringstream ssfilename;
+      ssfilename << "eigenvalue_" << k  << ".mhd";
+      std::string filename;
+      ssfilename >> filename;
+      std::cout << k << "  *  " <<eigen[k-1] << "  *  " 
+        <<filename.c_str() <<std::endl;
       writer->SetFileName( filename.c_str() );
       }
     writer->Update();
