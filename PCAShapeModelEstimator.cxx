@@ -103,10 +103,11 @@ const char* getFileExtension(const std::string& file)
 
 int main( int argc, char** argv )
 {
-  if( argc != 2 )
+  if( argc != 3 )
     {
     std::cerr << "PCAShapeModelEstimator(.exe) takes argument" <<std::endl;
     std::cerr << "1-Input Folder" <<std::endl;
+    std::cerr << "2-Number Of Eigenvalues" <<std::endl;
     return EXIT_FAILURE;
     }
 
@@ -128,6 +129,7 @@ int main( int argc, char** argv )
     {
     if(strcmp(getFileExtension(files[i]),".mhd") == 0)
       {
+      std::cout <<files[i] <<std::endl;
       std::string filename = argv[1];
       filename += files[i];
       
@@ -140,7 +142,8 @@ int main( int argc, char** argv )
       }
     }
 
-  unsigned int NumberOfEigenValues = 3;
+  std::cout <<listofimages.size() <<std::endl;
+  unsigned int NumberOfEigenValues = atoi( argv[2] );
 
   typedef itk::ImagePCAShapeModelEstimator<ImageType, ImageType>
     ImagePCAShapeModelEstimatorType;
@@ -164,7 +167,8 @@ int main( int argc, char** argv )
   ImagePCAShapeModelEstimatorType::VectorOfDoubleType 
     eigen = applyPCAShapeEstimator->GetEigenValues();
 
-  for( unsigned int k = 0; k < NumberOfEigenValues + 1; k++ )
+ /*
+ * for( unsigned int k = 0; k < NumberOfEigenValues + 1; k++ )
     {
     WriterType::Pointer writer = WriterType::New();
     writer->SetInput( applyPCAShapeEstimator->GetOutput( k ) );
@@ -184,6 +188,64 @@ int main( int argc, char** argv )
       }
     writer->Update();
     }
+*/
+
+  ImageType::Pointer mean_image = 
+    applyPCAShapeEstimator->GetOutput( 0 );
+
+  WriterType::Pointer m_writer = WriterType::New();
+  m_writer->SetFileName( "mean.mhd" );
+  m_writer->SetInput( mean_image );
+  m_writer->Write();
+
+  for( unsigned int k = 0; k < NumberOfEigenValues; k++ )
+    {
+    ImageType::Pointer eigen_image = applyPCAShapeEstimator->GetOutput( k+1 );
+    float s = static_cast< float >( eigen[k] );
+
+    std::cout <<s <<std::endl;
+
+    ImageType::Pointer output = ImageType::New();
+    output->CopyInformation( mean_image );
+    output->SetRegions( mean_image->GetLargestPossibleRegion() );
+    output->Allocate();
+    output->FillBuffer( 0. );
+
+    itk::ImageRegionIterator< ImageType > o_it( output, output->GetLargestPossibleRegion() );
+    itk::ImageRegionIterator< ImageType > m_it( mean_image, mean_image->GetLargestPossibleRegion() );
+    itk::ImageRegionIterator< ImageType > e_it( eigen_image, eigen_image->GetLargestPossibleRegion() );
+
+    o_it.GoToBegin();
+    m_it.GoToBegin();
+    e_it.GoToBegin();
+
+    float tmax = -10000.;
+    float tmin = 100000;
+
+    while( !o_it.IsAtEnd() )
+      {
+      float t = m_it.Get() + s * e_it.Get();
+      if( t > tmax )
+        tmax =t;
+      if( t <tmin )
+        tmin =t;
+      o_it.Set( m_it.Get() + s * e_it.Get() );
+      ++o_it;
+      ++m_it;
+      ++e_it;
+      }
+  
+    std::cout <<tmin <<" * " <<tmax <<std::endl; 
+    WriterType::Pointer writer = WriterType::New();
+    writer->SetInput( output );
+    std::stringstream ssfilename;
+    ssfilename << "variation_" << k  << ".mhd";
+    std::string filename;
+    ssfilename >> filename;
+    writer->SetFileName( filename.c_str() );
+    writer->Write();
+    }
+
   return EXIT_SUCCESS;
 }
 
