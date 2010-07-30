@@ -8,6 +8,7 @@
 #include "vtkImageData.h"
 #include "vtkPolyDataToImageStencil.h"
 #include "vtkImageStencil.h"
+#include "vtkTriangle.h"
 
 #include "vtkPoissonReconstruction.h"
 
@@ -64,7 +65,23 @@ int main( int argc, char** argv )
     poissonFilter->SetDepth( atoi( argv[2] ) );
     poissonFilter->SetInput( output );
     poissonFilter->Update();
+    
+    // ------------------------------------------------------------
+    //  Compute Area
+    // ------------------------------------------------------------
+    vtkSmartPointer< vtkPolyData > surface = poissonFilter->GetOutput();
+    
+    vtkIdType NumberOfCells = surface->GetNumberOfCells();
+    
+    double area = 0.;
 
+    for (vtkIdType i = 0; i < NumberOfCells; ++i)
+    {
+      vtkTriangle* t = dynamic_cast<vtkTriangle*>( surface->GetCell(i) );
+      area += t->ComputeArea();
+    }
+    std::cout << "Area " << area << std::endl;
+    
     vtkSmartPointer< vtkPolyDataWriter > writer =
       vtkSmartPointer< vtkPolyDataWriter >::New();
     writer->SetFileName( argv[3] );
@@ -132,6 +149,27 @@ int main( int argc, char** argv )
     imgstenc->ReverseStencilOff();
     imgstenc->SetBackgroundValue( outval );
     imgstenc->Update();
+    
+    vtkSmartPointer< vtkImageData > image = imgstenc->GetOutput();
+    vtkIdType counter = 0;
+
+    for( int i = 0; i < dim[0]; i++ )
+      {
+      for( int j = 0; j < dim[1]; j++ )
+        {
+        for( int k = 0; k < dim[2]; k++ )
+          {
+          unsigned char* pixel = 
+            (unsigned char* ) image->GetScalarPointer( i, j, k );
+          if( *pixel == 255 )
+            {
+            counter++;
+            }
+          }
+        }
+      }
+      
+    std::cout << "Volume : " << counter * 1000 <<std::endl;
 
     vtkSmartPointer<vtkMetaImageWriter> imagewriter =
       vtkSmartPointer<vtkMetaImageWriter>::New();
