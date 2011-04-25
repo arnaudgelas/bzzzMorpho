@@ -65,7 +65,7 @@ int NumberOfFiles (const char *path)
   int numberOfFiles = 0;
 
   if (dir == NULL) {
-    return NULL;            /* opendir() failed */
+    return 0;            /* opendir() failed */
   }
   /* Pass 1: Count number of files and subdirectories */
   while ((dp = readdir (dir)) != NULL) {

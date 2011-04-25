@@ -18,7 +18,7 @@ FIND_PACKAGE( ITK REQUIRED )
 INCLUDE( ${ITK_USE_FILE} )
 
 ADD_EXECUTABLE( SignedDistance SignedDistance.cxx )
-TARGET_LINK_LIBRARIES( SignedDistance ITKIO ITKCommon )
+TARGET_LINK_LIBRARIES( SignedDistance ${ITK_LIBRARIES} )
 
 ADD_EXECUTABLE( PCAShapeModelEstimator PCAShapeModelEstimator.cxx )
-TARGET_LINK_LIBRARIES( PCAShapeModelEstimator ITKIO ITKCommon )
+TARGET_LINK_LIBRARIES( PCAShapeModelEstimator ${ITK_LIBRARIES} )
